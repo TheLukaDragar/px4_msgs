@@ -28,6 +28,11 @@ jobs:
             exit 1
           fi
           GITLAB_URL="https://oauth2:${GITLAB_TOKEN}@gitlab.ssrdteam.com/drones/px4_msgs.git"
-          git remote add gitlab "${GITLAB_URL}"
+          # Self-hosted runners may reuse workspaces; avoid "remote gitlab already exists".
+          if git remote get-url gitlab &>/dev/null; then
+            git remote set-url gitlab "${GITLAB_URL}"
+          else
+            git remote add gitlab "${GITLAB_URL}"
+          fi
           git push gitlab --all --force
           git push gitlab --tags --force

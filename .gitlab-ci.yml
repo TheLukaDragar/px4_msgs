@@ -1,0 +1,27 @@
+# ROS 2 .deb builds for px4_msgs via shared pipelines in drones/ci_scripts
+# (same pattern as ci_demo_package/.gitlab-ci.yml).
+#
+# Required CI/CD variables on this project (see ci_demo_package/README.md):
+#   REGISTRY / REGISTRY_USER / DOCKER_REGISTRY_PASSWORD (masked)
+#   PUSH_TOKEN_PPA — GitLab PAT for the PPA package repo push
+#
+# Runners must provide Docker+dind-capable jobs tagged `ava`, same as drones/ci_scripts.
+
+workflow:
+  rules:
+    # Manual runs from GitLab UI
+    - if: $CI_PIPELINE_SOURCE == "web"
+    # Synced pushes from GitHub: build ROS 2 on branches except legacy ros1 only
+    - if: $CI_COMMIT_BRANCH == "ros1"
+      when: never
+    # Release/tag pushes
+    - if: $CI_COMMIT_TAG
+    # Any other branch push (mirrors permissive GitHub ROS 2 CI)
+    - if: $CI_COMMIT_BRANCH
+  auto_cancel:
+    on_new_commit: interruptible
+
+include:
+  - project: "drones/ci_scripts"
+    ref: main
+    file: "/ros_package_build.gitlab-ci.yml"

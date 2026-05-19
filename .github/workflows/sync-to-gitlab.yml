@@ -1,0 +1,31 @@
+# Mirrors this repository to GitLab after each push (requires GITLAB_TOKEN in repo secrets).
+# Create a GitLab Personal Access Token with at least api + write_repository (or project token with write access).
+name: Sync to GitLab
+
+on:
+  push:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${GITLAB_TOKEN}" ]]; then
+            echo "::error::Set the GITLAB_TOKEN repository secret (GitLab PAT with push access)."
+            exit 1
+          fi
+          GITLAB_URL="https://oauth2:${GITLAB_TOKEN}@gitlab.ssrdteam.com/drones/px4_msgs.git"
+          git remote add gitlab "${GITLAB_URL}"
+          git push gitlab --all --force
+          git push gitlab --tags --force
